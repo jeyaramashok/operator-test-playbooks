@@ -45,6 +45,21 @@
     src: "operatorgroup.yml.j2"
     dest: "{{ olm_operator_files_path }}/operatorgroup.processed.yml"
 
+# - name: "Deploy operator image pull secret"
+#   k8s:
+#     namespace: "{{ openshift_namespace }}"
+#     state: present
+#     src: "{{ image_pull_secret }}"
+#   when: image_pull_secret is defined
+
+- name: "Deploy operator image pull secret"
+  shell: "{{ oc_bin_path }} create -f {{ image_pull_secret }} -n {{ openshift_namespace }}"
+  register: image_pull_secret_result
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  when: image_pull_secret is defined
+
+
 - name: "Process the marketplacesecret template"
   template:
     src: "marketplacesecret.yml.j2"
