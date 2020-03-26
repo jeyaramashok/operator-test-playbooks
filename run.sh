@@ -1,13 +1,21 @@
-ansible-playbook            \
-    -vv -i "localhost,"     \
-    --connection=local      \
-    -e run_catalog_init=true     \
-    -e image_pull_secret="/home/jey/workspace/src/github.com/redhat-operator-ecosystem/operator-test-playbooks/pullsecret.yaml" \
-    -e quay_token=${QUAY_TOKEN}     \
-    -e quay_namespace=${QUAY_NAMESPACE}            \
-    -e kubeconfig_path=~/.kube/config         \
-    -e operator_dir="~/pingpong-operator"     \
+#!/usr/bin/env bash
+
+# required input, set as env variables
+quay_namespace=${QUAY_NAMESPACE:?}           # required
+quay_token=${QUAY_TOKEN:?}                   # required
+kube_config=${KUBECONFIG_MOUNT_DIR:?}        # required
+operator_dir=${OPERATOR_MOUNT_DIR:?}         # required
+image_pullsecret=${IMAGE_PULLSECRET_MOUNT_PATH:-}       # optional
+
+
+ansible-playbook                              \
+    -vv -i "localhost,"                       \
+    --connection=local                        \
+    -e run_catalog_init=true                  \
+    -e image_pullsecret="${image_pullsecret}" \
+    -e quay_token="${quay_token}"             \
+    -e quay_namespace="${quay_namespace}"     \
+    -e kubeconfig_path="${kube_config}/config"       \
+    -e operator_dir="${operator_dir}"         \
     -e production_quay_namespace="certified-operators" \
-    -e ansible_python_interpreter="/home/jey/workspace/src/github.com/redhat-operator-ecosystem/operator-test-playbooks/venv/bin/python" \
-    local-test-operator.yml  \
-    | tee run-$(date "+%Y-%m-%d_%H%M%S").log
+    local-test-operator.yml

@@ -1,0 +1,13 @@
+version: '3'
+services:
+  playbook:
+    build:
+      context: .
+      dockerfile: ./build/Dockerfile
+    volumes:
+      - ${OPERATOR_DIR}:${OPERATOR_MOUNT_DIR}
+      - ${KUBECONFIG_DIR}:${KUBECONFIG_MOUNT_DIR}
+      - ${IMAGE_PULLSECRET}:${IMAGE_PULLSECRET_MOUNT_PATH}
+      - ${OUTPUT_DIR}:${OUTPUT_MOUNT_DIR}
+    env_file: .env
+

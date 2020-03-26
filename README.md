@@ -22,7 +22,7 @@ The instructions for installing operator-courier can be found at [this link](htt
 
 The user needs to be currently logged into a working OCP cluster that will be used for testing as `kubeadmin` for the tests to work.
 
-The path to the kubeconfig file for the OCP cluster needs to be supplied as the `kubeconfig_path` parameter, 
+The path to the kubeconfig file for the OCP cluster needs to be supplied as the `kubeconfig_path` parameter,
 for example: `-e kubeconfig_path=~/testing/kubeconfig`
 
 For rapid prototyping, you can spin up an OCP cluster using [Red Hat CodeReady Workspaces](https://developers.redhat.com/products/codeready-workspaces/download)
@@ -31,7 +31,7 @@ You can then specify your kubeconfig as follows: `-e kubeconfig_path= ~/.crc/cac
 
 #### 3. A valid quay.io namespace (for ISV and Community operators only)
 
-A valid quay.io namespace to which the user has access to needs to be supplied as the `quay_namespace` parameter, 
+A valid quay.io namespace to which the user has access to needs to be supplied as the `quay_namespace` parameter,
 for example: `-e quay_namespace="${QUAY_NAMESPACE}"`
 
 The testing process includes creating a private repository, be advised about the limits on the account owning the namespace.
@@ -48,7 +48,7 @@ QUAY_TOKEN=$(curl -sH "Content-Type: application/json" -XPOST https://quay.io/cn
         "password": "'"${QUAY_PASSWORD}"'"
     }
 }' | jq -r '.token' | cut -d' ' -f2)
-``` 
+```
 
 The token can then be supplied as the `quay_token` parameter, for example: `-e quay_token="${QUAY_TOKEN}"`
 
@@ -63,7 +63,7 @@ for example: `-e operator_dir=~/testing/operator-metadata`
 
 The rest of the required binaries are downloaded by the playbook to a temporary directory in `/tmp/operator-test/bin` and don't need to be installed manually.
 
-If we, for some reason, want to skip the download (for example if we already have the required binaries at that location from a previous playbook run), 
+If we, for some reason, want to skip the download (for example if we already have the required binaries at that location from a previous playbook run),
 we can set the `run_prereqs` parameter in this way: ``-e run_prereqs=false``
 
 ### Selecting operator tests
@@ -78,7 +78,7 @@ If we want to enable or disable individual tests, we can use these parameters an
 
 ### Resource cleanup
 
-The created resources and namespace are cleaned up after the playbook run by default. 
+The created resources and namespace are cleaned up after the playbook run by default.
 If we want to leave the resources after the run, we can set the `run_cleanup` parameter like this: `-e run_cleanup=false`
 
 ### Example usages
@@ -94,7 +94,7 @@ ansible-playbook -vv -i "localhost," --connection=local local-test-operator.yml 
 ```
 Currently the access to an OCP cluster or an quay.io account is not required
 
-#### 2. Full operator testing for ISV (Certified) operators 
+#### 2. Full operator testing for ISV (Certified) operators
 If we want to run the full ISV operator testing, we invoke the playbook with the following command (inserting the aforementioned prerequisites):
 
 ```bash
@@ -117,5 +117,51 @@ ansible-playbook -vv -i "localhost," --connection=local local-test-operator.yml 
     -e production_quay_namespace="community-operators" \
     -e operator_dir="${OPERATOR_DIR}" \
     -e run_imagesource=false
+```
+
+## Run playbooks in a Docker image
+
+### Pre-requistes
+
+* A quay.io repository, with push access.
+
+**NOTE**: this is where the bundle manifests will be pushed to, if you don't wish the manifests to be public use a private repository
+
+* [docker-compose](https://docs.docker.com/compose/)
+
+To get the quay.io token
+
+```bash
+QUAY_TOKEN=$(curl -sH "Content-Type: application/json" -XPOST https://quay.io/cnr/api/v1/users/login -d '
+{
+    "user": {
+        "username": "'"${QUAY_USERNAME}"'",
+        "password": "'"${QUAY_PASSWORD}"'"
+    }
+}' | jq -r '.token' | cut -d' ' -f2)
+```
+
+Create a `.env` file with following values.
+
+Fix the values for `QUAY_NAMESPACE, QUAY_TOKEN, OPERATOR_DIR, IMAGE_PULLSECRET (if any)`
+
+```
+QUAY_NAMESPACE=jeyaramashok
+QUAY_TOKEN=<REDACTED>
+IMAGE_PULLSECRET=~/workspace/go/src/github.com/redhat-operator-ecosystem/operator-test-playbooks/pullsecret.yaml
+KUBECONFIG_DIR=~/.kube
+OPERATOR_DIR=~/workspace/go/src/github.ibm.com/jashokr/pingpong-operator/deploy/olm-catalog/pingpong-operator
+OUTPUT_DIR=/tmp/operator-test
+
+# don't change these
+OPERATOR_MOUNT_DIR=/opt/app-root/src/operator-dir
+KUBECONFIG_MOUNT_DIR=/opt/app-root/src/.kube
+OUTPUT_MOUNT_DIR=/tmp/operator-test
+IMAGE_PULLSECRET_MOUNT_PATH=/opt/app-root/src/input/pullsecret.yaml
+```
+
+Run
+```
+$ docker-compose up | tee run-$(date "+%Y-%m-%d_%H%M%S").log
 ```
 
