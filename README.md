@@ -165,3 +165,10 @@ Run
 $ docker-compose up | tee run-$(date "+%Y-%m-%d_%H%M%S").log
 ```
 
+If any changes are made to playbook source files, the images needs to be rebuilt with:
+
+```
+$ docker-compose up --build
+```
+
+
